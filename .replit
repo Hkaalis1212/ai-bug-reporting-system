@@ -1,8 +1,8 @@
 language = "python3"
-run = "pip install -r requirements.txt && python main.py"
+run = "pip install -r requirements.txt && python app.py"
 
 [nix]
 channel = "stable-22_11"
 
 [deployment]
-run = ["sh", "-c", "pip install -r requirements.txt && python main.py"]
+run = ["sh", "-c", "pip install -r requirements.txt && python app.py"]
