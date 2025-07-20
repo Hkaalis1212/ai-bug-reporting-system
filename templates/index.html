@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-truck"></i> Trucking Fleet Optimization Audit
+                </h1>
+                <p class="lead mb-4">
+                    Discover hidden cost savings in your trucking fleet with our comprehensive AI-powered analysis.
+                    Identify optimization opportunities worth thousands of dollars annually.
+                </p>
+                <form method="POST" action="{{ url_for('run_audit') }}">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-play"></i> Start Free Demo Audit
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                    <h4>Performance Analysis</h4>
+                    <p>Comprehensive analysis of fuel efficiency, costs, and driver performance across your entire fleet.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-dollar-sign fa-3x text-success mb-3"></i>
+                    <h4>Cost Savings</h4>
+                    <p>Identify specific opportunities for cost reduction with detailed calculations of potential annual savings.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-route fa-3x text-info mb-3"></i>
+                    <h4>Route Optimization</h4>
+                    <p>Analyze route efficiency and identify opportunities for fuel savings through optimized routing.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-lg-12">
+            <h2 class="text-center mb-4">What You'll Get</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Detailed performance analysis</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Cost optimization opportunities</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Driver performance rankings</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Interactive charts and graphs</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Implementation recommendations</li>
+                        <li class="list-group-item"><i class="fas fa-check text-success"></i> Downloadable data and reports</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

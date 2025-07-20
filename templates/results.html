@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <h1 class="text-center mb-4">
+                <i class="fas fa-chart-bar"></i> Fleet Optimization Audit Results
+            </h1>
+            
+            <div class="savings-highlight">
+                <h2><i class="fas fa-dollar-sign"></i> Potential Annual Savings</h2>
+                <h1 class="display-3">${{ "{:,.2f}".format(results.total_savings) }}</h1>
+                <p>Identified {{ results.opportunities|length }} optimization opportunities</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-tachometer-alt"></i> Fleet Performance Summary</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Total Trips:</strong><br>
+                            <span class="text-primary fs-4">{{ "{:,}".format(results.analysis_results.total_trips) }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Total Miles:</strong><br>
+                            <span class="text-primary fs-4">{{ "{:,.0f}".format(results.analysis_results.total_miles) }}</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Average MPG:</strong><br>
+                            <span class="text-success fs-4">{{ "{:.2f}".format(results.analysis_results.avg_mpg) }}</span>
+                        </div>
+                        <div class="col-6">
+                            <strong>Cost per Mile:</strong><br>
+                            <span class="text-warning fs-4">${{ "{:.2f}".format(results.analysis_results.avg_cost_per_mile) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-download"></i> Download Reports</h4>
+                </div>
+                <div class="card-body">
+                    <p>Download your fleet data and analysis results:</p>
+                    <a href="{{ url_for('download_csv') }}" class="btn btn-outline-primary btn-block mb-2">
+                        <i class="fas fa-file-csv"></i> Download Sample Data (CSV)
+                    </a>
+                    <button class="btn btn-outline-secondary btn-block" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print This Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-lightbulb"></i> Optimization Opportunities</h4>
+                </div>
+                <div class="card-body">
+                    {% for opp in results.opportunities %}
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-arrow-up"></i> {{ opp.category }}</h5>
+                        <p><strong>Description:</strong> {{ opp.description }}</p>
+                        <p><strong>Potential Annual Savings:</strong> <span class="text-success">${{ "{:,.2f}".format(opp.potential_annual_savings) }}</span></p>
+                        <p><strong>Implementation:</strong> {{ opp.implementation }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-chart-histogram"></i> Fuel Efficiency Distribution</h4>
+                </div>
+                <div class="card-body text-center">
+                    <img src="data:image/png;base64,{{ results.charts.mpg_distribution }}" 
+                         class="img-fluid" alt="MPG Distribution Chart">
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-chart-bar"></i> Cost by Truck Type</h4>
+                </div>
+                <div class="card-body text-center">
+                    <img src="data:image/png;base64,{{ results.charts.cost_by_truck_type }}" 
+                         class="img-fluid" alt="Cost by Truck Type Chart">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-trophy"></i> Driver Performance</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-success">Top Performing Drivers</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Driver</th>
+                                            <th>Avg MPG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for driver_id, metrics in results.analysis_results.top_drivers.iterrows() %}
+                                        <tr>
+                                            <td>{{ driver_id }}</td>
+                                            <td>{{ "{:.2f}".format(metrics.MPG) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-warning">Improvement Opportunities</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Driver</th>
+                                            <th>Avg MPG</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for driver_id, metrics in results.analysis_results.bottom_drivers.iterrows() %}
+                                        <tr>
+                                            <td>{{ driver_id }}</td>
+                                            <td>{{ "{:.2f}".format(metrics.MPG) }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-12 text-center">
+            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-redo"></i> Run Another Audit
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
