@@ -3,7 +3,7 @@
 Web Interface for Trucking Fleet Optimization Audit System
 """
 
-from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for
+from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, flash, render_template_string
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,6 +16,8 @@ import base64
 import os
 import threading
 import time
+import zipfile
+from werkzeug.utils import secure_filename
 warnings.filterwarnings('ignore')
 
 # Set matplotlib to use non-interactive backend
@@ -23,10 +25,33 @@ import matplotlib
 matplotlib.use('Agg')
 
 app = Flask(__name__)
+app.secret_key = 'your-secret-key-here'  # Change this to a random secret key
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['UPLOAD_FOLDER'] = 'uploads'
+
+# Create uploads directory if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Allowed file extensions
+ALLOWED_EXTENSIONS = {'zip'}
 
 # Global variable to store audit results
 audit_results = {}
 audit_status = {"running": False, "complete": False, "progress": 0}
+
+def allowed_file(filename):
+    """Check if the file extension is allowed"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def extract_zip_file(zip_path, extract_to):
+    """Extract zip file and return list of extracted files"""
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+            return zip_ref.namelist()
+    except zipfile.BadZipFile:
+        return None
 
 class TruckingOptimizationAuditor:
     def __init__(self):
@@ -802,6 +827,115 @@ results_template = """{% extends "base.html" %}
 
 with open('templates/results.html', 'w') as f:
     f.write(results_template)
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_file():
+    """Handle zip file uploads"""
+    if request.method == 'POST':
+        # Check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        
+        # If user does not select file, browser also submits an empty part without filename
+        if file.filename == '':
+            flash('No selected file')
+            return redirect(request.url)
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"{timestamp}_{filename}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            try:
+                file.save(file_path)
+                
+                # Extract the zip file
+                extract_path = os.path.join(app.config['UPLOAD_FOLDER'], f"extracted_{timestamp}")
+                extracted_files = extract_zip_file(file_path, extract_path)
+                
+                if extracted_files:
+                    flash(f'File successfully uploaded and extracted! Found {len(extracted_files)} files.')
+                    return jsonify({
+                        'success': True,
+                        'message': f'Zip file uploaded and extracted successfully',
+                        'filename': filename,
+                        'extracted_files': extracted_files,
+                        'extract_path': extract_path
+                    })
+                else:
+                    flash('Error: Invalid zip file')
+                    return jsonify({'success': False, 'error': 'Invalid zip file'})
+                    
+            except Exception as e:
+                flash(f'Error uploading file: {str(e)}')
+                return jsonify({'success': False, 'error': str(e)})
+        else:
+            flash('Error: Only .zip files are allowed')
+            return jsonify({'success': False, 'error': 'Only .zip files are allowed'})
+    
+    # GET request - show upload form
+    upload_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Upload Zip File</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            .upload-container { max-width: 500px; margin: 0 auto; }
+            .upload-area { 
+                border: 2px dashed #ccc; 
+                border-radius: 10px; 
+                padding: 40px; 
+                text-align: center; 
+                background-color: #f9f9f9;
+            }
+            .upload-area:hover { border-color: #007bff; }
+            .btn { 
+                background-color: #007bff; 
+                color: white; 
+                padding: 10px 20px; 
+                border: none; 
+                border-radius: 5px; 
+                cursor: pointer; 
+            }
+            .btn:hover { background-color: #0056b3; }
+            .alert { padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+            .alert-success { background-color: #d4edda; color: #155724; }
+            .alert-error { background-color: #f8d7da; color: #721c24; }
+        </style>
+    </head>
+    <body>
+        <div class="upload-container">
+            <h1>Upload Zip File</h1>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-success">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form method="post" enctype="multipart/form-data">
+                <div class="upload-area">
+                    <p>Choose a zip file to upload</p>
+                    <input type="file" name="file" accept=".zip" required>
+                    <br><br>
+                    <button type="submit" class="btn">Upload Zip File</button>
+                </div>
+            </form>
+            
+            <br>
+            <a href="/">← Back to Main Page</a>
+        </div>
+    </body>
+    </html>
+    """
+    return render_template_string(upload_template)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
